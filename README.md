@@ -1,29 +1,35 @@
-# Welcome to your Lovable project
+# Midway Derby
 
-This project was built with [Lovable](https://lovable.dev).
+A browser-based pixel carnival horse race built with React 19, TypeScript, Vite, Tailwind CSS 4, and Radix UI components. No Lovable services, server runtime, database, or environment variables are required. Race history is saved in the visitor's browser using localStorage.
 
-## Build with Lovable
+## Local development
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Use Node.js 22.12 or newer (Node 22 LTS recommended).
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm ci
 npm run dev
 ```
 
-## Built with
+## Verification and production build
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+```sh
+npm run typecheck
+npm test
+npm run build
+npm run preview
+```
+
+Vite writes the static site to `dist/`.
+
+## Host on Netlify
+
+Push this repository to GitHub, then import it as a new project in Netlify. The included `netlify.toml` sets:
+
+- Build command: `npm run build`
+- Publish directory: `dist`
+- Node version: `22`
+
+Leave the base directory unset when deploying this repository's root. Netlify installs dependencies from `package-lock.json` and deploys on pushes to the connected branch. The SPA rewrite supports direct navigation; unknown paths display the app's 404 screen.
+
+For a manual upload, run `npm ci` and `npm run build`, then upload the `dist` folder at https://app.netlify.com/drop.

@@ -1,17 +1,25 @@
-import { QueryClient } from "@tanstack/react-query";
-import { createRouter, rootRouteId } from "@tanstack/react-router";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import App from "@/App";
 
-import { routeTree } from "@/routeTree.gen";
+// Keep the real app shell while isolating canvas/audio race rendering in jsdom.
+vi.mock("@/Derby", () => ({ default: () => <h1>Midway Derby</h1> }));
 
-// Match routes without running loaders or rendering: loaders may need a server or
-// network the test run lacks, and jsdom never loads the stylesheets React waits on.
+afterEach(() => {
+  cleanup();
+  window.history.replaceState({}, "", "/");
+});
+
 describe("App routing", () => {
-  it("matches a page for / instead of falling back to not found", () => {
-    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+  it("renders the derby at the home path", () => {
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Midway Derby" })).toBeInTheDocument();
+  });
 
-    const matches = router.matchRoutes("/");
-
-    expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
+  it("shows a home link for unknown paths", () => {
+    window.history.replaceState({}, "", "/missing");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go home" })).toHaveAttribute("href", "/");
   });
 });

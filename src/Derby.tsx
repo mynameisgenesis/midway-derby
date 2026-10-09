@@ -1,24 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { HORSES } from "@/lib/horses";
 import { Track, ordinal } from "@/components/derby/Track";
 import { Confetti } from "@/components/derby/Confetti";
 import { COUNTDOWN_S, INTERMISSION_S, useRaceEngine, type Snapshot } from "@/hooks/useRaceEngine";
 import { position } from "@/lib/race";
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Midway Derby — Pixel Carnival Horse Races" },
-      { name: "description", content: "Watch five pixel horses dash down the midway in simulated carnival races that run automatically, every couple of minutes." },
-      { property: "og:title", content: "Midway Derby — Pixel Carnival Horse Races" },
-      { property: "og:description", content: "Simulated retro fairground horse races with live results and a winner's circle." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: Index,
-});
 
 const fmt = (s: number) => {
   const v = Math.max(0, Math.ceil(s));
@@ -55,7 +40,7 @@ function Marquee() {
   );
 }
 
-function Index() {
+export default function Derby() {
   const { snap, confetti, sound, raceNow, togglePause, toggleSound, registerDraw } = useRaceEngine();
   const [showRoster, setShowRoster] = useState(true);
 
