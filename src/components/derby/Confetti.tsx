@@ -8,8 +8,13 @@ export function Confetti({ fire }: { fire: number }) {
     if (!c) return;
     const ctx = c.getContext("2d");
     if (!ctx) return;
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
+    const resize = () => {
+      c.width = Math.round(c.clientWidth);
+      c.height = Math.round(c.clientHeight);
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(c);
     const css = getComputedStyle(document.documentElement);
     const colors = ["--primary", "--accent", "--secondary", "--card"].map((v) => css.getPropertyValue(v).trim() || "#e8b52a");
     const parts = Array.from({ length: 180 }, () => {
@@ -45,9 +50,10 @@ export function Confetti({ fire }: { fire: number }) {
     };
     raf = requestAnimationFrame(tick);
     return () => {
+      observer.disconnect();
       cancelAnimationFrame(raf);
       ctx.clearRect(0, 0, c.width, c.height);
     };
   }, [fire]);
-  return <canvas ref={ref} data-testid="confetti" className="pointer-events-none fixed inset-0 z-50 h-full w-full" aria-hidden />;
+  return <canvas ref={ref} data-testid="confetti" className="pointer-events-none absolute inset-0 z-20 h-full w-full" aria-hidden />;
 }

@@ -109,10 +109,12 @@ export function Track({
   registerDraw,
   places,
   children,
+  fullscreen = false,
 }: {
   registerDraw: (fn: DrawFn | null) => void;
   places: Record<number, number>;
   children?: ReactNode;
+  fullscreen?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -127,11 +129,11 @@ export function Track({
       const w = e.contentRect.width;
       const lw = Math.round(Math.min(420, Math.max(200, w / 2.6)));
       setW(lw);
-      setCssH((w * H) / lw);
+      setCssH(fullscreen ? Math.min((w * H) / lw, Math.max(120, window.innerHeight - 90)) : (w * H) / lw);
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [fullscreen]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -186,7 +188,7 @@ export function Track({
   const scale = cssH / H;
 
   return (
-    <div className="flex">
+    <div className="flex w-full">
       <div className="relative w-[6.5rem] shrink-0 sm:w-44" style={{ height: cssH || undefined }}>
         <div
           className="absolute inset-x-0 top-0 flex items-end justify-center pb-1 font-display text-[0.5rem] uppercase tracking-widest text-secondary sm:text-[0.6rem]"
@@ -215,7 +217,7 @@ export function Track({
           </div>
         ))}
       </div>
-      <div ref={wrapRef} className="relative min-w-0 flex-1">
+      <div ref={wrapRef} className="relative min-w-0 flex-1 overflow-hidden">
         <canvas
           ref={canvasRef}
           width={W}

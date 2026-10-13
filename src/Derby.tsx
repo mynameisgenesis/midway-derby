@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { HORSES } from "@/lib/horses";
 import { Track, ordinal } from "@/components/derby/Track";
 import { Confetti } from "@/components/derby/Confetti";
@@ -43,6 +43,43 @@ function Marquee() {
 export default function Derby() {
   const { snap, confetti, sound, raceNow, togglePause, toggleSound, registerDraw } = useRaceEngine();
   const [showRoster, setShowRoster] = useState(true);
+  const trackRef = useRef<HTMLElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setFullscreen(document.fullscreenElement === trackRef.current);
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !document.fullscreenElement) setFullscreen(false);
+    };
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("fullscreenchange", sync);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [fullscreen]);
+
+  const toggleFullscreen = async () => {
+    if (fullscreen) {
+      if (document.fullscreenElement === trackRef.current) await document.exitFullscreen();
+      else setFullscreen(false);
+    } else {
+      try {
+        if (!trackRef.current?.requestFullscreen) throw new Error("Fullscreen unavailable");
+        await trackRef.current.requestFullscreen();
+        setFullscreen(true);
+      } catch {
+        setFullscreen(true);
+      }
+    }
+  };
 
   const places: Record<number, number> = {};
   if (snap) {
@@ -54,7 +91,6 @@ export default function Derby() {
 
   return (
     <main className="min-h-screen pb-10">
-      <Confetti fire={confetti} />
       <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-6 sm:py-8">
         <Marquee />
 
@@ -71,8 +107,26 @@ export default function Derby() {
           </div>
         </section>
 
-        <section className="pixel-frame overflow-hidden bg-card" aria-label="Race track">
-          <Track registerDraw={registerDraw} places={places}>
+        <section ref={trackRef} className={`pixel-frame overflow-hidden bg-card ${fullscreen ? "track-fullscreen" : ""}`} aria-label="Race track">
+          <div className="flex items-center justify-end gap-2 border-b-2 border-border px-3 py-2">
+            {fullscreen && <Btn onClick={raceNow} disabled={!snap || snap.phase !== "finished"}>Race now</Btn>}
+            {fullscreen && <Btn variant="secondary" onClick={togglePause} disabled={!snap} pressed={snap?.paused}>{snap?.paused ? "Resume" : "Pause"}</Btn>}
+            <Btn variant="ghost" onClick={() => void toggleFullscreen()} pressed={fullscreen}>{fullscreen ? "Exit fullscreen" : "Fullscreen track"}</Btn>
+          </div>
+          <Track registerDraw={registerDraw} places={places} fullscreen={fullscreen}>
+            <Confetti fire={confetti} />
+            {snap?.phase === "finished" && (
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-ink/30 p-2" data-testid="winner-overlay" role="status">
+                <div key={snap.raceNumber} className="pop-in flex max-w-full items-center gap-3 rounded-md border-[3px] border-border bg-card/95 p-3 shadow-pixel sm:gap-5 sm:p-5">
+                  <img src={HORSES[snap.plan.winner]!.portrait} alt={`${HORSES[snap.plan.winner]!.name}, winning horse`} className="h-16 w-16 shrink-0 rounded-sm border-2 border-border object-cover sm:h-28 sm:w-28" />
+                  <div>
+                    <p className="font-display text-[0.55rem] text-primary sm:text-xs">★ Race #{snap.raceNumber} winner ★</p>
+                    <h2 className="mt-2 text-xl font-bold sm:text-4xl">{HORSES[snap.plan.winner]!.name} wins!</h2>
+                    <p className="mt-2 text-xs text-secondary sm:text-base">Next race in {fmt(INTERMISSION_S - snap.elapsed)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
             {snap?.phase === "countdown" && (
               <div className="absolute inset-0 grid place-items-center bg-ink/20">
                 <div className="text-center">
